@@ -601,10 +601,7 @@ CTracer_unpack_pair(CTracer *self, PyObject *pair, int *p_one, int *p_two)
     int index;
 
     if (!PyTuple_Check(pair) || PyTuple_Size(pair) != 2) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "line_number_range must return 2-tuple"
-            );
+        PyErr_SetString(PyExc_TypeError, "line_number_range must return 2-tuple");
         goto error;
     }
 
@@ -645,13 +642,15 @@ CTracer_handle_line(CTracer *self, PyFrameObject *frame)
                 from_to = PyObject_CallMethodObjArgs(self->pcur_entry->file_tracer, str_line_number_range, frame, NULL);
                 if (from_to == NULL) {
                     CTracer_disable_plugin(self, self->pcur_entry->disposition);
-                    goto ok;
+                    PyErr_SetString(PyExc_TypeError, "line_number_range errored out");
+                    goto error;
                 }
                 ret2 = CTracer_unpack_pair(self, from_to, &lineno_from, &lineno_to);
                 Py_DECREF(from_to);
                 if (ret2 < 0) {
                     CTracer_disable_plugin(self, self->pcur_entry->disposition);
-                    goto ok;
+                    PyErr_SetString(PyExc_TypeError, "line_number_range didn't return a pair");
+                    goto error;
                 }
             }
             else {
